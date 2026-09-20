@@ -1192,3 +1192,66 @@ Untuk soal nomor 9 ini hanya disuruh buat membuktikan bahwa mika hanya bisa read
 <p align="center">
   <img src="revisi9.png" alt="Validasi nc soal 20 TLS decrypt flag" width="700">
 </p>
+## Soal 11
+
+Running the command i've prepaared again, we can see that it somehow works again (???)
+![[WhatsApp Image 2026-09-20 at 22.01.53.jpeg]]
+
+dan bisa juga login ke user itu 
+![[WhatsApp Image 2026-09-20 at 22.03.46.jpeg]]
+## Soal 12
+
+sama seperti soal 13, python3 tiga (somehow) uninstalled itself from Knights
+![[Pasted image 20260920230801.png]]
+
+setelah install ulang : 
+![[Pasted image 20260920230820.png]]
+
+Kita buka port 22,80, tetapi bukan 7777
+
+Dan jika test alice 
+![[Pasted image 20260920230912.png]]
+boom terbukti yay ke closed 7777, hidup jarkom
+## Soal 13
+Revisi disini muncul karena config openssh dan even openssh sendiri tidak terinstall....
+anyways....
+### Install ulang openssh
+![[Pasted image 20260920222417.png]]
+
+### sshd mati, config ulang dan tambahkan user `mika_admin`
+
+![[Pasted image 20260920222438.png]]
+
+![[Screenshot 2026-09-20 222850 1.png]]
+### membuat pasangan kunci
+![[Screenshot 2026-09-20 223158.png]]
+
+### pasang public key `Mika` di `Knights`
+![[Screenshot 2026-09-20 223409.png]]
+
+### Rapikan permission dan password
+![[Screenshot 2026-09-20 223621.png]]
+
+### Tulis ulang kunci satu baris
+![[Screenshot 2026-09-20 223713.png]]
+
+### SSH berhasil, masih pakai password![[Screenshot 2026-09-20 223828 1.png]]
+
+### tutup sesi
+![[Screenshot 2026-09-20 223908.png]]
+
+### ganti kunci ke ed25519 di `Mika`
+
+![[Screenshot 2026-09-20 224015.png]]
+
+### Pasang public key ed25519 di Knights
+![[Screenshot 2026-09-20 224112.png]]
+
+### Login tanpa password
+![[Screenshot 2026-09-20 224056.png]]
+
+### Matikan login password
+![[Screenshot 2026-09-20 224225.png]]
+
+### Veri(ty)fikasi
+![[Screenshot 2026-09-20 224256.png]]

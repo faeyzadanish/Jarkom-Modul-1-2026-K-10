@@ -1,0 +1,461 @@
+Soal 1
+Router Lain:
+ip addr add 192.216.1.1/24 dev eth1
+ip addr add 192.216.2.1/24 dev eth2
+ip addr add 192.216.3.1/24 dev eth3
+
+ip link set eth1 up
+ip link set eth2 up
+ip link set eth3 up
+
+ip -br a
+
+Alice:
+ip addr add 192.216.1.2/24 dev eth0
+ip link set eth0 up
+ip route add default via 192.216.1.1
+
+ip -br a
+ip route
+
+Mika:
+ip addr add 192.216.1.3/24 dev eth0
+ip link set eth0 up
+ip route add default via 192.216.1.1
+
+ip -br a
+ip route
+
+Chisa:
+ip addr add 192.216.1.3/24 dev eth0
+ip link set eth0 up
+ip route add default via 192.216.1.1
+
+ip -br a
+ip route
+
+Knights:
+ip addr add 192.216.3.2/24 dev eth0
+ip link set eth0 up
+ip route add default via 192.216.3.1
+
+ip -br a
+ip route
+
+Eiri:
+ip addr add 192.216.3.3/24 dev eth0
+ip link set eth0 up
+ip route add default via 192.216.3.1
+
+ip -br a
+ip route
+
+Soal 2
+Router Lain:
+dhclient eth0
+ip -br a
+ip route
+ping -c 4 8.8.8.8
+
+Soal 3
+sysctl -w net.ipv4.ip_forward=1
+sysctl net.ipv4.ip_forward
+
+Uji Client: mika to chisa
+ping -c 4 192.216.2.2
+
+Uji Client: mika to knights
+ping -c 4 192.216.3.2
+
+Uji Client: chisa to mika
+ping -c 4 192.216.1.3
+
+Uji Client: knights to chisa
+ping -c 4 192.216.2.2
+
+Soal 4
+Router Lain:
+sysctl -w net.ipv4.ip_forward=1
+iptables -t nat -A POSTROUTING -s 192.216.1.0/24 -o eth0 -j MASQUERADE
+iptables -t nat -A POSTROUTING -s 192.216.2.0/24 -o eth0 -j MASQUERADE
+iptables -t nat -A POSTROUTING -s 192.216.3.0/24 -o eth0 -j MASQUERADE
+iptables -t nat -L -v -n
+
+Client:
+printf 'nameserver 8.8.8.8\nnameserver 1.1.1.1\n' > /etc/resolv.conf
+ping -c 4 8.8.8.8
+ping -c 4 google.com
+
+Soal 5
+Router Lain:
+iptables-save > /root/iptables.rules
+nano /root/restore_nat.sh
+Isi:
+#!/bin/bash
+
+iptables-restore < /root/iptables.rules
+chmod +x /root/restore_nat.sh
+nano /root/init.sh
+Isi:
+#!/bin/sh
+
+sysctl -w net.ipv4.ip_forward=1
+
+if [ -f /root/iptables.rules ]; then
+    iptables-restore < /root/iptables.rules
+fi
+chmod +x /root/init.sh
+nano /root/cek_status.sh
+Isi:
+#!/bin/bash
+
+echo "===== INTERFACE ====="
+ip -br a
+
+echo
+echo "===== NAT TABLE ====="
+iptables -t nat -L -v -n
+chmod +x /root/cek_status.sh
+/root/cek_status.sh
+nano /etc/debinet-init.sh
+Isi:
+#!/bin/sh
+
+if [ -x /root/init.sh ]; then
+    /root/init.sh
+fi
+
+Soal 6
+Nide Mika:
+nano /root/traffic_protocol7.sh
+Isi:
+#!/bin/bash
+
+echo "============================================"
+echo "  Protocol 7 Traffic Generator v2026"
+echo "  Node: Mika Iwakura"
+echo "============================================"
+echo "[*] Generating DNS & ICMP traffic..."
+
+# ICMP Traffic
+ping -c 5 8.8.8.8 &
+ping -c 5 1.1.1.1 &
+ping -c 3 its.ac.id &
+
+# DNS Queries
+nslookup google.com 8.8.8.8 &
+nslookup its.ac.id 8.8.8.8 &
+nslookup github.com 1.1.1.1 &
+dig @8.8.8.8 example.com A &
+dig @1.1.1.1 cloudflare.com AAAA &
+
+wait
+
+echo "[*] Traffic generation complete."
+echo "[*] Check Wireshark for captured packets."
+chmod +x /root/traffic_protocol7.sh
+/root/traffic_protocol7.sh
+
+Wireshark: 
+icmp
+dns
+
+Soal 7
+Node Chisa:
+apt update
+apt install vsftpd -y
+which vsftpd
+
+Membuat User:
+Alice:
+useradd -m -s /bin/bash alice
+passwd alice
+Mika:
+useradd -m -s /bin/bash mika
+passwd mika
+Eiri:
+useradd -m -s /bin/bash eiri
+passwd eiri
+
+Membuat shared folder:
+mkdir -p /var/wired/data
+groupadd ftpusers
+usermod -aG ftpusers alice
+usermod -aG ftpusers mika
+chown alice:ftpusers /var/wired/data
+chmod 750 /var/wired/data
+ls -ld /var/wired/data
+
+Konfigurasi vsftpd:
+cp /etc/vsftpd.conf /etc/vsftpd.conf.bak
+nano /etc/vsftpd.conf
+anonymous_enable=NO
+local_enable=YES
+write_enable=YES
+chroot_local_user=YES
+local_root=/var/wired/data
+userlist_enable=YES
+userlist_deny=YES
+userlist_file=/etc/vsftpd.user_list
+allow_writeable_chroot=YES
+user_config_dir=/etc/vsftpd_user_conf
+
+Blacklist Eiri:
+echo "eiri" > /etc/vsftpd.user_list
+
+Membatasi Mika:
+mkdir -p /etc/vsftpd_user_conf
+nano /etc/vsftpd_user_conf/mika
+write_enable=NO
+
+Menjalankan ftp server:
+/usr/sbin/vsftpd /etc/vsftpd.conf &
+ps aux | grep '[v]sftpd'
+
+Alice Membuat file:
+su - alice
+echo "Signal dari Alice" > /var/wired/data/signal_alice.txt
+ls -l /var/wired/data/signal_alice.txt
+
+UJi Eiri:
+ftp 192.216.2.2
+Username: eiri
+Password: [password Eiri]
+530 Permission denied
+
+Soal 8
+node Knights:
+echo "File upload dari Knights" > upload_knights.txt
+ls -l upload_knights.txt
+Login ke FTP Chisa:
+ftp 192.216.2.2
+
+Login menggunakan Alice:
+Username: alice
+Password: [password Alice]
+passive
+put upload_knights.txt
+150 ...
+226 Transfer complete
+bye
+
+Wireshark:
+ftp
+
+Untuk mencari command upload:
+STOR
+
+Untuk response sukses:
+226
+
+Untuk melihat passive mode:
+PASV
+ftp.request.command == "PASV"
+
+Soal 9
+Node Mika:
+ftp 192.216.2.2
+
+Login:
+Username: mika
+Password: [password Mika]
+
+Melihat daftar file:
+ls
+
+Download file Protokol Tujuh:
+get <nama_file_protokol_tujuh>
+
+Keluar:
+bye
+
+Cek file yang berhasil didownload:
+ls -l
+Pengujian Read-Only
+
+Buat file untuk percobaan upload:
+echo "Percobaan upload Mika" > test_mika.txt
+
+Login kembali:
+ftp 192.216.2.2
+
+Login menggunakan Mika kemudian:
+put test_mika.txt
+
+Hasil yang diharapkan:
+550 Permission denied
+
+Soal 10
+Node Knights:
+ping -c 77 -s 128 -i 0.3 192.216.2.2
+
+Parameter:
+-c 77    → mengirim 77 paket
+-s 128   → payload 128 bytes
+-i 0.3   → interval 0,3 detik
+
+Hasil akhir yang dicatat:
+77 packets transmitted
+XX packets received
+XX% packet loss
+rtt min/avg/max/mdev = ...
+Wireshark
+
+Filter seluruh ICMP:
+icmp
+
+Filter Echo Request:
+icmp.type == 8
+
+Filter Echo Reply:
+icmp.type == 0
+
+Soal 11
+Node Chisa:
+printf 'nameserver 8.8.8.8\nnameserver 1.1.1.1\n' > /etc/resolv.conf
+apt update
+apt install -y telnetd telnet
+id phantom_user || useradd -m -s /bin/bash phantom_user
+passwd phantom_user
+Password: wired_ghost
+update-inetd --enable telnet
+grep -i telnet /etc/inetd.conf
+pkill inetd
+pkill inetutils-inetd
+pkill telnetd
+/usr/sbin/inetutils-inetd
+ss -lntup | grep ':23'
+
+Node Airi / Eiri:
+printf 'nameserver 8.8.8.8\nnameserver 1.1.1.1\n' > /etc/resolv.conf
+which telnet || apt install -y telnet
+telnet 192.216.2.2
+
+Login:
+Username: phantom_user
+Password: wired_ghost
+
+whoami
+exit
+
+Wireshark:
+Capture pada kabel Airi <-> Switch2 atau Chisa <-> Switch3
+Filter:
+tcp.port == 23
+Follow -> TCP Stream
+
+Yang dicari:
+phantom_user
+wired_ghost
+setiap karakter password terkirim paket TCP terpisah
+
+
+Soal 12
+Node Knights:
+printf 'nameserver 8.8.8.8\nnameserver 1.1.1.1\n' > /etc/resolv.conf
+apt update
+apt install -y openssh-server python3
+mkdir -p /run/sshd
+/usr/sbin/sshd
+python3 -m http.server 80 &
+ss -lntup | grep -E ':22|:80|:7777'
+
+Node Alice:
+ping -c 2 192.216.3.2
+nc -zv 192.216.3.2 22
+nc -zv 192.216.3.2 80
+nc -zv 192.216.3.2 7777
+
+Hasil yang diharapkan:
+Connection to 192.216.3.2 22 port [tcp/ssh] succeeded!
+Connection to 192.216.3.2 80 port [tcp/http] succeeded!
+nc: connect to 192.216.3.2 port 7777 (tcp) failed: Connection refused
+
+Wireshark:
+Capture pada kabel Alice <-> Switch1 atau Knights <-> Switch2
+Filter:
+tcp.port == 22 || tcp.port == 80 || tcp.port == 7777
+
+Port terbuka 22 dan 80:
+SYN dari Alice
+SYN, ACK dari Knights
+ACK dari Alice
+
+Port tertutup 7777:
+SYN dari Alice
+RST, ACK dari Knights
+
+
+Soal 13
+Node Knights:
+printf 'nameserver 8.8.8.8\nnameserver 1.1.1.1\n' > /etc/resolv.conf
+apt update
+apt install -y openssh-server
+mkdir -p /run/sshd
+/usr/sbin/sshd
+ss -lntup | grep ':22'
+id mika_admin || useradd -m -s /bin/bash mika_admin
+passwd mika_admin
+Password: 12345
+mkdir -p /home/mika_admin/.ssh
+chmod 700 /home/mika_admin/.ssh
+touch /home/mika_admin/.ssh/authorized_keys
+chmod 600 /home/mika_admin/.ssh/authorized_keys
+chown -R mika_admin:mika_admin /home/mika_admin/.ssh
+
+Node Mika:
+printf 'nameserver 8.8.8.8\nnameserver 1.1.1.1\n' > /etc/resolv.conf
+apt update
+apt install -y openssh-client
+id mika_admin || useradd -m -s /bin/bash mika_admin
+passwd mika_admin
+Password: 12345
+su - mika_admin
+mkdir -p ~/.ssh
+chmod 700 ~/.ssh
+ssh-keygen -t rsa -b 2048 -f ~/.ssh/id_rsa -N ""
+ls -l ~/.ssh
+cat ~/.ssh/id_rsa.pub
+
+Public key yang dipakai:
+ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC48dmZ5T6AHjOK5exBdIoBDSkWtEeoDtI2fGtLyPOUNdOo6P+Ptbmc9R8kzUA29TQKLOD6y/lXB/U35YpeS5wfRf75FIJv0BHgd0uNcAt35NTSv0Zp7wbQ/tLA+RqHH5lq8pdta010fnthuABsl0kcOmXrrWxB/KgiVwHzdYYvu5KkEFKMihnAbS0H9ulCy5RwegeYnC4ocaGltCcUb4RPJkIMOaxsK6MrJRdt5qyVgupsdjUOboKSpdCSt5ge8rBa3QFmDlkz5Mn1xFsJ9aARLtLZsmap66c9gkX+1sfygDZgSbFaW/p8lXUi8Jbj0GOwK2R1qr45lzhMPeStCG/D mika_admin@Mika
+
+Node Knights:
+echo 'ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC48dmZ5T6AHjOK5exBdIoBDSkWtEeoDtI2fGtLyPOUNdOo6P+Ptbmc9R8kzUA29TQKLOD6y/lXB/U35YpeS5wfRf75FIJv0BHgd0uNcAt35NTSv0Zp7wbQ/tLA+RqHH5lq8pdta010fnthuABsl0kcOmXrrWxB/KgiVwHzdYYvu5KkEFKMihnAbS0H9ulCy5RwegeYnC4ocaGltCcUb4RPJkIMOaxsK6MrJRdt5qyVgupsdjUOboKSpdCSt5ge8rBa3QFmDlkz5Mn1xFsJ9aARLtLZsmap66c9gkX+1sfygDZgSbFaW/p8lXUi8Jbj0GOwK2R1qr45lzhMPeStCG/D mika_admin@Mika' >> /home/mika_admin/.ssh/authorized_keys
+chown -R mika_admin:mika_admin /home/mika_admin/.ssh
+chmod 700 /home/mika_admin/.ssh
+chmod 600 /home/mika_admin/.ssh/authorized_keys
+cat /home/mika_admin/.ssh/authorized_keys
+
+Node Mika:
+su - mika_admin
+ssh -o StrictHostKeyChecking=no mika_admin@192.216.3.2
+whoami
+exit
+
+Node Knights:
+sed -i 's/^#\?PasswordAuthentication.*/PasswordAuthentication no/' /etc/ssh/sshd_config
+sed -i 's/^#\?PubkeyAuthentication.*/PubkeyAuthentication yes/' /etc/ssh/sshd_config
+grep -E 'PasswordAuthentication|PubkeyAuthentication' /etc/ssh/sshd_config
+pkill sshd
+mkdir -p /run/sshd
+/usr/sbin/sshd
+ss -lntup | grep ':22'
+
+Node Mika:
+su - mika_admin
+ssh mika_admin@192.216.3.2
+whoami
+exit
+
+Wireshark:
+Capture pada kabel Mika <-> Switch1 atau Knights <-> Switch2
+Filter:
+ssh || tcp.port == 22
+
+Yang dicari:
+Protocol Version Exchange
+SSH-2.0-OpenSSH
+Key Exchange Init
+New Keys
+Follow TCP Stream tidak menampilkan password
