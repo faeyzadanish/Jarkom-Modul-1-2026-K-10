@@ -1169,3 +1169,26 @@ KOMJAR26{TLS_D3crypt_NrKDlCgZOwz0w7Z00QRF4Cd6e}
 ### Analisis
 
 Berbeda dengan Telnet/FTP/HTTP biasa, isi sesi ini baru terbaca setelah key log dipakai. Handshake menegosiasikan `TLSv1.2` ke `example.com` (`93.184.216.34`). Setelah dekripsi, request-nya `HEAD /` dengan User-Agent `curl/7.62.0`. Ini menutup rangkaian soal: protokol plaintext bocor sendiri, TLS tidak — kecuali kuncinya ikut tertangkap.
+
+# Revisian
+
+## Soal 7
+Jadi untuk nomor 7 ini tadi kendalanya ftp servernya hilang dan disini saya melakukan install ulang. Jadi setelah saya install ulang langsung saya lakukan uji coba untuk ketentuan dari nomor 7 yaitu untuk `alice` bisa write and read, akan tetapi untuk `eiri` gagal untuk login ke ftp servernya. Dibawah ini hasil dari uji coba saya
+
+<p align="center">
+  <img src="revisi7.png" alt="Validasi nc soal 20 TLS decrypt flag" width="700">
+</p>
+
+## Soal 8
+Untuk soal nomor 8 ini saya hanya melanjutkan karena tadi saat demo tidak saaya jelaskan karena terkendala pada nomor 7. dan sekarang untuk nomor 8 sudah berhasil untuk STOR, PASV dan 226
+
+<p align="center">
+  <img src="revisi8.png" alt="Validasi nc soal 20 TLS decrypt flag" width="700">
+</p>
+
+## Soal 9
+Untuk soal nomor 9 ini hanya disuruh buat membuktikan bahwa mika hanya bisa read only dan tidak bisa upload file. Nomor ini masuk ke dalam revisi karena tadi saat demo saya tidak sempat menjelaskan karena masih terkendala pada nomor 7 yaitu FTP servernya hilang dan harus di install ulang. Dibawah ini merupakan hasil dari pengujian mika yang tidak bisa upload file
+
+<p align="center">
+  <img src="revisi9.png" alt="Validasi nc soal 20 TLS decrypt flag" width="700">
+</p>
